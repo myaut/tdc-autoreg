@@ -1,26 +1,34 @@
-tdc-autoreg
------------
+AutoReg
+=======
+
+How to Use
+----------
 
 This set of scripts is used to automatically configure Virtual Machines, cloned from OVA in VirtualBox.
 Every cloned VM registers within AutoReg server to save it's IP address and takes it's hostname from server.
 
-1. You create OVA file with all needed software and AutoReg agent (note that server address is hardcoded on this step)
-1. VMs are cloned from OVA using gen-vbox-vms script:
+* You create OVA file with all needed software and AutoReg agent (note that server address is hardcoded on this step)
+* VMs are cloned from OVA using gen-vbox-vms script:
+
 ```
-   # /opt/autoreg/gen-vbox-vms.py -i <path to ova> 	\
-	      -n <vm name prefix> -c <count> 		\
-	      -p <base port number for VRDE> 		\
-	      -s <server:port>
+# /opt/autoreg/gen-vbox-vms.py -i <path to ova> 	\
+      -n <vm name prefix> -c <count> 			\
+      -p <base port number for VRDE> 			\
+      -s <server:port>
 ```
-2. When VM starts, and agent is run, it polls server, until it would be registered (done automatically by gen-vbox-vms). Also, agent updates hosts database with IP address that was assigned to VM by DHCP.
-3. Agent updates host configuration
+
+* When VM starts, and agent is run, it polls server, until it would be registered (done automatically by gen-vbox-vms). Also, agent updates hosts database with IP address that was assigned to VM by DHCP.
+* Agent updates host configuration
 	* Writes hostname
 	* Creates file /etc/autoreg.lock that disables agent
 	* Reboots VM
-4. You may reconfigure VM:
+* You may reconfigure VM:
+
+```
 	$ arhostadm unconfigure 080027C91726
 	$ arhostadm ... (reconfigure entry)
 	$ arhostadm register 080027C91726
+```
 
 You may use extra vars 	to do additional configuration steps. Agent supports CentOS and Solaris 11.
 	
@@ -28,7 +36,7 @@ How To Install
 --------------
 
 Edit run-autoreg.py and autoreg-srv.py (change listening address, server address, port, etc.)
-Create distros (mkagent.sh and mkserver.sh) and upload them to Server Master VM.
+Create distros (mkagent.sh and mkserver.sh) and upload them to Server and Master VM.
 
 Install and run server
 ```
