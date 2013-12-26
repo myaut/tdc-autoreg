@@ -1,0 +1,4 @@
+#!/bin/sh
+
+export PYTHONPATH='/opt/autoreg/'
+$PYTHONPATH/run-autoreg.py
