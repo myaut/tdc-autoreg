@@ -67,11 +67,21 @@ On Solaris create startup script link:
 # ln -s /opt/autoreg/S99autoreg /etc/rc3.d/
 ```
 
-On Linux (RHEL-like), create chkconfig script:
+On Linux (RHEL-like) with SysVInit, register startup script with chkconfig:
 ```
 # ln -s /opt/autoreg/autoreg /etc/init.d
 # chkconfig --add autoreg
 # chkconfig autoreg on
+```
+
+On Linux systems with systemd, register it:
+```
+# cp /opt/autoreg/autoreg.conf /etc/systemd/system/autoreg.service
+# systemctl enable autoreg.conf
+```
+To start it immediately, run `systemd enable`:
+```
+# systemctl enable autoreg.service
 ```
 
 Run VM and check that it receives state 'C' (configured) and adds its IP to database.

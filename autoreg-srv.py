@@ -9,7 +9,7 @@ from autoreg.server import HostDBServer
 # Copyright (c) Sergey Klyaus, 2011
 # Published under GPLv2 LICENSE
 #
-# Version 0.5
+# Version 0.6
 # --------------------------------------------
 
 SERVER_IPADDR = '0.0.0.0'

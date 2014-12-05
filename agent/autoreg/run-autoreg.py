@@ -1,13 +1,11 @@
 #!/usr/bin/python
 
 # --------------------------------------------
-# TDC hosts automatic registration v1.0
+# TDC hosts automatic registration v1.1
 # 
 # Basic Solaris 11 / Linux agent for VirtualBox
-# Copyright (c) Sergey Klyaus, 2011
+# Copyright (c) Sergey Klyaus, 2011, 2014
 # Published under GPLv2 LICENSE
-#
-# Version 0.5
 # --------------------------------------------
 
 import os
@@ -17,16 +15,18 @@ import subprocess
 import shutil
 
 import autoregagent
+import select
 
-SERVER_IPADDR = 'tdcsrv.tdc'
+SERVER_IPADDR = 'r520.tdc'
 SERVER_PORT = 8765
+AR_SUFFIX='.ar_orig'
 
 def log(fmtstr, *args):
-    subprocess.call(["logger", "-p", "daemon.notice", "TDC Autoreg: " + (fmtstr % args)])
+    subprocess.call(["logger", "-p", "daemon.notice", "TDC Autoreg: " + (fmtstr % args)])       
 
 def backup_config(path):
-    if not os.path.exists(path + '.autoreg_orig'):
-        shutil.copy(path, path + '.autoreg_orig')
+    if not os.path.exists(path + AR_SUFFIX):
+        shutil.copy(path, path + AR_SUFFIX)
     
 def get_info():
     if sys.platform == 'sunos5':
@@ -35,7 +35,7 @@ def get_info():
                                  stdout=subprocess.PIPE)    
     elif sys.platform == 'linux2':
         ethname = 'eth0'
-        ifcfg = subprocess.Popen(("/sbin/ip", "addr", "show", "dev", ethname), 
+        ifcfg = subprocess.Popen(("ip", "addr", "show", "dev", ethname), 
                                  stdout=subprocess.PIPE)
     
     ifcfg_out = ifcfg.stdout.read()
@@ -64,18 +64,23 @@ def update_hostname(hostname):
     elif sys.platform == 'linux2':
         hosts_path = '/etc/hosts'
         
-        # On RHEL we update /etc/sysconfig/network
-        path = '/etc/sysconfig/network'
-        
-        backup_config(path)
-        orig_netcfg = file(path + '.autoreg_orig')
-        netcfg = file(path, 'w')
-        
-        for l in orig_netcfg:
-            if l.startswith('HOSTNAME'):
-                print >> netcfg, 'HOSTNAME=' + hostname
-            else:
-                netcfg.write(l)
+        if os.stat('/usr/bin/hostnamectl'):
+            # RHEL/CentOS 7 are using systemd - so call hostnamectl directly
+            
+            hostnamectl = subprocess.call(('hostnamectl', 'set-hostname', hostname))
+        else:            
+            # On RHEL we update /etc/sysconfig/network
+            path = '/etc/sysconfig/network'
+            
+            backup_config(path)
+            orig_netcfg = file(path + AR_SUFFIX)
+            netcfg = file(path, 'w')
+            
+            for l in orig_netcfg:
+                if l.startswith('HOSTNAME'):
+                    print >> netcfg, 'HOSTNAME=' + hostname
+                else:
+                    netcfg.write(l)
     
     hnlist = [hostname, hostname + '.local', 'localhost', 'loghost']
     
@@ -101,8 +106,8 @@ def reboot():
     if sys.platform == 'sunos5':
         subprocess.call('shutdown -i6 -y', shell=True)
     else:
-        subprocess.call('/sbin/reboot')
-    
+        subprocess.call('reboot')
+        
 (hostid, ipaddr) = get_info()
 agent = autoregagent.HostAgent(SERVER_IPADDR, SERVER_PORT)
 
@@ -116,3 +121,6 @@ try:
     reboot()
 except autoregagent.HostAlreadyConfigured:
     log("Already configured")
+    
+    # Eternally sleep
+    select.select([], [], [])
